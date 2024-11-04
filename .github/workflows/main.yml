@@ -1,0 +1,44 @@
+name: FTP Deploy ASP.NET
+
+on:
+  push:
+    branches:
+      - master 
+
+jobs:
+  build-and-deploy:
+    runs-on: windows-latest
+
+    steps:
+    # Checkout the latest code from the branch
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    # Setup .NET SDK
+    - name: Setup .NET Core SDK
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: '6.x'  # Use the required version
+
+    # Restore dependencies
+    - name: Restore Dependencies
+      run: dotnet restore
+
+    # Build the application
+    - name: Build
+      run: dotnet build --configuration Release --no-restore
+
+    # Publish the application to a folder
+    - name: Publish
+      run: dotnet publish -c Release -o ./publish
+
+    # Upload published files to FTP server
+    - name: FTP Deploy
+      uses: SamKirkland/FTP-Deploy-Action@v4
+      with:
+        server: ${{ secrets.FTP_SERVER }}
+        username: ${{ secrets.FTP_USERNAME }}
+        password: ${{ secrets.FTP_PASSWORD }}
+        local-dir: ./publish
+        server-dir: ${{ secrets.FTP_REMOTE_PATH }}
+
